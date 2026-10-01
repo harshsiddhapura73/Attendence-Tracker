@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>eProcurement Technology Attendance Tracker</title>
+<style>
+  :root{
+    --primary:#3b82f6;
+    --primary-dark:#2563eb;
+    --green:#22c55e;
+    --red:#ef4444;
+    --amber:#f59e0b;
+    --bg:#0a0e14;
+    --card:#151a23;
+    --card-soft:#1c2330;
+    --text:#e5e9f0;
+    --muted:#8b95a7;
+    --border:#2a3140;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Segoe UI',Roboto,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    display:flex;
+    justify-content:center;
+    color-scheme:dark;
+  }
+  .app{
+    width:100%;
+    max-width:440px;
+    min-height:100vh;
+    background:var(--bg);
+    padding-bottom:30px;
+  }
+  header{
+    background:linear-gradient(135deg,#0d1117,#1a2130);
+    color:#fff;
+    padding:14px 16px;
+    position:sticky;
+    top:0;
+    z-index:50;
+    box-shadow:0 2px 10px rgba(0,0,0,0.5);
+    border-bottom:1px solid var(--border);
+  }
+  header .title-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    max-width:75%;
+  }
+  .brand .tiger{
+    font-size:26px;
+    line-height:1;
+    filter:drop-shadow(0 0 4px rgba(245,158,11,0.4));
+    flex-shrink:0;
+  }
+  .brand-text .brand-name{
+    font-size:14px;
+    font-weight:700;
+    line-height:1.2;
+  }
+  .brand-text .brand-sub{
+    font-size:10.5px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.5px;
+  }
+  header .user{
+    flex-shrink:0;
+  }
+  .avatar{
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    border:2px solid var(--primary);
+    display:block;
+  }
+  .section{
+    background:var(--card);
+    margin:12px;
+    border-radius:var(--radius);
+    padding:14px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.06);
+  }
+  .clock-box{
+    text-align:center;
+  }
+  .clock-box .clock{
+    font-size:36px;
+    font-weight:700;
+    color:var(--primary-dark);
+    letter-spacing:1px;
+    font-variant-numeric:tabular-nums;
+  }
+  .clock-box .date-str{
+    font-size:13px;
+    color:var(--muted);
+    margin-top:2px;
+  }
+  .punch-row{
+    display:flex;
+    gap:10px;
+  }
+  .punch-btn{
+    flex:1;
+    padding:16px 0;
+    border:none;
+    border-radius:12px;
+    font-size:16px;
+    font-weight:700;
+    color:#fff;
+    cursor:pointer;
+    transition:transform .1s, opacity .2s;
+  }
+  .punch-btn:active{transform:scale(0.97);}
+  .punch-btn.in{background:var(--green);}
+  .punch-btn.out{background:var(--red);}
+  .punch-btn:disabled{
+    background:#94a3b8;
+    cursor:not-allowed;
+    opacity:0.7;
+  }
+  .punch-sub{
+    text-align:center;
+    font-size:11px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+  .month-select-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .month-select-row label{font-size:13px;color:var(--muted);}
+  .month-select-row input[type=month]{
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:6px 8px;
+    font-size:13px;
+    background:var(--card-soft);
+    color:var(--text);
+    color-scheme:dark;
+  }
+  .summary-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+  }
+  .summary-card{
+    text-align:center;
+    background:var(--card-soft);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px 4px;
+  }
+  .summary-card .label{
+    font-size:10.5px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.3px;
+  }
+  .summary-card .value{
+    font-size:17px;
+    font-weight:700;
+    margin-top:4px;
+    font-variant-numeric:tabular-nums;
+  }
+  .summary-card.early .value{color:var(--amber);}
+  .summary-card.late .value{color:var(--primary);}
+  .summary-card.cover .value{color:var(--red);}
+
+  .action-row{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:8px;
+  }
+  .action-btn{
+    padding:10px 6px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--card-soft);
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--text);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+  }
+  .action-btn:active{background:var(--bg);}
+  .action-btn.danger{color:var(--red);border-color:#7f1d1d;}
+
+  .quick-actions{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:6px;
+  }
+  .qa-btn{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    background:var(--card-soft);
+    border:1.5px solid var(--border);
+    border-radius:14px;
+    padding:12px 2px;
+    cursor:pointer;
+    transition:transform .1s, filter .15s;
+  }
+  .qa-btn:active{transform:scale(0.95);}
+  .qa-btn .icon{font-size:19px;line-height:1;}
+  .qa-btn .lab{font-size:10px;font-weight:700;letter-spacing:.2px;}
+  .qa-btn.qa-add{border-color:#134e4a;}
+  .qa-btn.qa-add .lab{color:#2dd4bf;}
+  .qa-btn.qa-export{border-color:#78350f;}
+  .qa-btn.qa-export .lab{color:#f59e0b;}
+  .qa-btn.qa-import{border-color:#1e3a8a;}
+  .qa-btn.qa-import .lab{color:#60a5fa;}
+  .qa-btn.qa-pdf{border-color:#134e4a;}
+  .qa-btn.qa-pdf .lab{color:#2dd4bf;}
+  .qa-btn.qa-clear{border-color:#7f1d1d;}
+  .qa-btn.qa-clear .lab{color:#fb7185;}
+
+  .log-header-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .log-header-row h2{font-size:15px;}
+  .log-card{
+    background:var(--card-soft);
+    border-radius:12px;
+    padding:10px 12px;
+    margin-bottom:10px;
+    border:1px solid var(--border);
+  }
+  .log-row1{
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .date-day{
+    min-width:64px;
+  }
+  .date-day .d{font-size:13px;font-weight:700;}
+  .date-day .w{font-size:10.5px;color:var(--muted);text-transform:uppercase;}
+  .time-block{
+    flex:1;
+    text-align:center;
+  }
+  .time-block .lab{font-size:9.5px;color:var(--muted);text-transform:uppercase;}
+  .time-block .val{font-size:11.5px;font-weight:600;font-variant-numeric:tabular-nums;}
+  .time-block .val.empty{color:#3a4356;}
+  .row-actions{
+    display:flex;
+    gap:4px;
+  }
+  .icon-btn{
+    border:1px solid var(--border);
+    background:var(--card);
+    width:26px;
+    height:26px;
+    border-radius:7px;
+    font-size:13px;
+    cursor:pointer;
+    color:var(--text);
+  }
+  .icon-btn.del{color:var(--red);}
+  .icon-btn.ins{color:var(--primary);}
+  .log-row2{
+    display:flex;
+    justify-content:space-between;
+    margin-top:8px;
+    padding-top:8px;
+    border-top:1px dashed var(--border);
+    font-size:11px;
+    color:var(--muted);
+  }
+  .log-row2 span b{color:var(--text);}
+  .log-row2 .early b{color:var(--amber);}
+  .log-row2 .late b{color:var(--primary);}
+  .log-row2 .cover b{color:var(--red);}
+  .empty-state{
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+    padding:20px 0;
+  }
+
+  /* Modal */
+  .overlay{
+    position:fixed;inset:0;
+    background:rgba(0,0,0,0.45);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:100;
+    padding:16px;
+  }
+  .overlay.show{display:flex;}
+  .modal{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    width:100%;
+    max-width:360px;
+    padding:18px;
+  }
+  .modal h3{font-size:15px;margin-bottom:12px;color:var(--text);}
+  .modal label{
+    display:block;
+    font-size:12px;
+    color:var(--muted);
+    margin:10px 0 4px;
+  }
+  .modal input{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    font-size:13px;
+    background:var(--bg);
+    color:var(--text);
+    color-scheme:dark;
+  }
+  .modal-actions{
+    display:flex;
+    gap:8px;
+    margin-top:16px;
+  }
+  .modal-actions button{
+    flex:1;
+    padding:10px 0;
+    border-radius:8px;
+    border:none;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .modal-actions .save{background:var(--primary);color:#fff;}
+  .modal-actions .cancel{background:var(--card-soft);color:var(--text);border:1px solid var(--border);}
+
+  #importFile{display:none;}
+  .toast{
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#1e293b;
+    color:#fff;
+    padding:10px 18px;
+    border-radius:20px;
+    font-size:12.5px;
+    z-index:200;
+    opacity:0;
+    transition:opacity .3s;
+    pointer-events:none;
+  }
+  .toast.show{opacity:1;}
+
+  @media print{
+    body{background:#fff;color:#111;}
+    .no-print{display:none !important;}
+    .app{max-width:100%;background:#fff;}
+    .section{box-shadow:none;border:1px solid #ddd;background:#fff;}
+    .log-card,.summary-card{background:#f8f8f8;border:1px solid #ddd;}
+    .clock,.brand-name,.d,.val,.log-row2 b{color:#111 !important;}
+    header{background:#fff !important;color:#111;border-bottom:1px solid #ddd;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="title-row">
+      <div class="brand">
+        <span class="tiger">🐯</span>
+        <div class="brand-text">
+          <div class="brand-name">eProcurement Technology</div>
+          <div class="brand-sub">Attendance Tracker</div>
+        </div>
+      </div>
+      <div class="user" title="Vikas Songara">
+        <svg class="avatar" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="20" cy="20" r="20" fill="#1c2330"/>
+          <circle cx="20" cy="16" r="7" fill="#3b82f6"/>
+          <path d="M6 36c0-8 6-13 14-13s14 5 14 13" fill="#3b82f6"/>
+        </svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- Clock -->
+  <div class="section clock-box">
+    <div class="clock" id="clock">--:--:--</div>
+    <div class="date-str" id="dateStr">--</div>
+  </div>
+
+  <!-- IN / OUT -->
+  <div class="section no-print">
+    <div class="punch-row">
+      <button class="punch-btn in" id="inBtn">IN TIME</button>
+      <button class="punch-btn out" id="outBtn">OUT TIME</button>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div class="section">
+    <div class="month-select-row">
+      <label for="monthSelector">Month</label>
+      <input type="month" id="monthSelector">
+    </div>
+    <div class="summary-grid">
+      <div class="summary-card early">
+        <div class="label">Early By</div>
+        <div class="value" id="sumEarly">00:00</div>
+      </div>
+      <div class="summary-card late">
+        <div class="label">Late By</div>
+        <div class="value" id="sumLate">00:00</div>
+      </div>
+      <div class="summary-card cover">
+        <div class="label">Cover Time</div>
+        <div class="value" id="sumCover">00:00</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log -->
+  <div class="section">
+    <div class="log-header-row">
+      <h2>Attendance Log</h2>
+    </div>
+    <div id="logList"></div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="section no-print quick-actions-section">
+    <div class="quick-actions">
+      <button class="qa-btn qa-add" id="addFab">
+        <span class="icon">➕</span>
+        <span class="lab">Add</span>
+      </button>
+      <button class="qa-btn qa-export" id="exportBtn">
+        <span class="icon">💾</span>
+        <span class="lab">Export</span>
+      </button>
+      <button class="qa-btn qa-import" id="importBtn">
+        <span class="icon">📂</span>
+        <span class="lab">Import</span>
+      </button>
+      <button class="qa-btn qa-pdf" id="pdfBtn">
+        <span class="icon">📄</span>
+        <span class="lab">PDF</span>
+      </button>
+      <button class="qa-btn qa-clear" id="clearBtn">
+        <span class="icon">🗑️</span>
+        <span class="lab">Clear</span>
+      </button>
+    </div>
+    <input type="file" id="importFile" accept="application/json">
+  </div>
+
+</div>
+
+<!-- Modal -->
+<div class="overlay no-print" id="overlay">
+  <div class="modal">
+    <h3 id="modalTitle">Add / Edit Entry</h3>
+    <label>Date</label>
+    <input type="date" id="mDate">
+    <label>IN Time <span style="color:var(--muted);font-weight:400;">(24-hr — just type digits)</span></label>
+    <input type="text" id="mIn" placeholder="e.g. 100000 → 10:00:00" inputmode="numeric" maxlength="8" autocomplete="off">
+    <label>OUT Time <span style="color:var(--muted);font-weight:400;">(24-hr — just type digits)</span></label>
+    <input type="text" id="mOut" placeholder="e.g. 190000 → 19:00:00" inputmode="numeric" maxlength="8" autocomplete="off">
+    <div class="modal-actions">
+      <button class="cancel" id="mCancel">Cancel</button>
+      <button class="save" id="mSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast no-print" id="toast"></div>
+
+<!-- Custom Confirm Dialog -->
+<div class="overlay no-print" id="confirmOverlay">
+  <div class="modal">
+    <h3 id="confirmTitle">Please Confirm</h3>
+    <p id="confirmMsg" style="font-size:13px;color:var(--muted);line-height:1.5;"></p>
+    <div class="modal-actions">
+      <button class="cancel" id="confirmCancel">Cancel</button>
+      <button class="save" id="confirmOk" style="background:var(--red);">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  const STORAGE_KEY = "eproc_attendance_records_v1";
+  let records = {}; // { "YYYY-MM-DD": { inTime:"HH:mm:ss", outTime:"HH:mm:ss" } }
+
+  /* ---------------- Storage ---------------- */
+  function loadRecords(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      records = raw ? JSON.parse(raw) : {};
+    }catch(e){ records = {}; }
+  }
+  function saveRecords(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  }
+
+  /* ---------------- IST Time helpers ---------------- */
+  function getISTNow(){
+    const now = new Date();
+    const istString = now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+    return new Date(istString);
+  }
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function toISODate(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+  function toTimeStr(d){ return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; }
+  function toDMY(isoDate){
+    const [y,m,d] = isoDate.split('-');
+    return `${d}-${m}-${y}`;
+  }
+  function toDayShort(isoDate){
+    const d = new Date(isoDate+'T00:00:00');
+    return d.toLocaleDateString('en-US',{weekday:'short'});
+  }
+  function to12Hour(timeStr){
+    if(!timeStr) return null;
+    const [hStr,mStr,sStr] = timeStr.split(':');
+    let h = parseInt(hStr,10);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12; if(h===0) h = 12;
+    return `${pad(h)}:${mStr}:${sStr||'00'} ${ampm}`;
+  }
+  function timeStrToMinutes(timeStr){
+    if(!timeStr) return null;
+    const [h,m,s] = timeStr.split(':').map(Number);
+    return h*60 + m + (s||0)/60;
+  }
+  function normalizeTimeInput(str){
+    if(!str) return null;
+    str = str.trim();
+    if(!str) return null;
+    const m = str.match(/^([01]?\d|2[0-3]):([0-5]?\d)(?::([0-5]?\d))?$/);
+    if(!m) return undefined; // invalid marker
+    const h = pad(parseInt(m[1],10));
+    const mm = pad(parseInt(m[2],10));
+    const ss = m[3] !== undefined ? pad(parseInt(m[3],10)) : '00';
+    return `${h}:${mm}:${ss}`;
+  }
+  function attachTimeMask(input){
+    input.addEventListener('input', function(){
+      const digits = input.value.replace(/\D/g,'').slice(0,6); // up to HHMMSS
+      let out = digits.slice(0,2);
+      if(digits.length > 2) out += ':' + digits.slice(2,4);
+      if(digits.length > 4) out += ':' + digits.slice(4,6);
+      input.value = out;
+    });
+  }
+
+  /* ---------------- Business Logic ---------------- */
+  function standardMinutesForDate(isoDate){
+    const d = new Date(isoDate+'T00:00:00');
+    const day = d.getDay(); // 0 Sun ... 6 Sat
+    if(day === 0) return 0;     // Sunday - off
+    if(day === 6) return 360;   // Saturday - 6 hrs (10:00 to 16:00)
+    return 540;                 // Mon-Fri - 9 hrs (10:00 to 19:00)
+  }
+
+  function computeRowStats(isoDate, rec){
+    if(!rec || !rec.inTime || !rec.outTime){
+      return { earlyBy:0, lateBy:0, coverTime:0, worked:null };
+    }
+    const inMins = timeStrToMinutes(rec.inTime);
+    let outMins = timeStrToMinutes(rec.outTime);
+    if(outMins < inMins) outMins += 24*60; // crossed midnight safeguard
+    const worked = outMins - inMins;
+    const standard = standardMinutesForDate(isoDate);
+    const diff = worked - standard;
+    let earlyBy = 0, lateBy = 0;
+    if(diff >= 0){ lateBy = diff; earlyBy = 0; }
+    else { earlyBy = Math.abs(diff); lateBy = 0; }
+    const coverTime = lateBy - earlyBy; // signed, equals diff
+    return { earlyBy, lateBy, coverTime, worked };
+  }
+
+  function formatMinutesHHMM(mins, signed){
+    if(mins === null || mins === undefined || isNaN(mins)) return "00:00";
+    const sign = mins < 0 ? '-' : (signed && mins > 0 ? '+' : '');
+    const abs = Math.abs(Math.round(mins));
+    const h = Math.floor(abs/60);
+    const m = abs % 60;
+    return `${sign}${pad(h)}:${pad(m)}`;
+  }
+
+  /* ---------------- Clock ---------------- */
+  function renderClock(){
+    const now = getISTNow();
+    document.getElementById('clock').textContent = toTimeStr(now);
+    document.getElementById('dateStr').textContent =
+      now.toLocaleDateString('en-GB', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+  }
+  setInterval(renderClock, 1000);
+
+  /* ---------------- IN / OUT ---------------- */
+  const inBtn = document.getElementById('inBtn');
+  const outBtn = document.getElementById('outBtn');
+
+  function updatePunchButtons(){
+    const todayKey = toISODate(getISTNow());
+    const rec = records[todayKey];
+    inBtn.disabled = !!(rec && rec.inTime);
+  }
+
+  inBtn.addEventListener('click', function(){
+    const now = getISTNow();
+    const dateKey = toISODate(now);
+    if(!records[dateKey]) records[dateKey] = {};
+    if(records[dateKey].inTime) return;
+    records[dateKey].inTime = toTimeStr(now);
+    saveRecords();
+    renderAll();
+    showToast("IN Time recorded: " + to12Hour(records[dateKey].inTime));
+  });
+
+  outBtn.addEventListener('click', function(){
+    const now = getISTNow();
+    const dateKey = toISODate(now);
+    if(!records[dateKey]) records[dateKey] = {};
+    records[dateKey].outTime = toTimeStr(now);
+    saveRecords();
+    renderAll();
+    showToast("OUT Time recorded: " + to12Hour(records[dateKey].outTime));
+    exportJSON(true); // auto export on every OUT click
+  });
+
+  /* ---------------- Month Selector ---------------- */
+  const monthSelector = document.getElementById('monthSelector');
+  function currentMonthKey(){
+    const now = getISTNow();
+    return `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
+  }
+  monthSelector.value = currentMonthKey();
+  monthSelector.addEventListener('change', renderAll);
+
+  /* ---------------- Summary ---------------- */
+  function renderSummary(){
+    const monthKey = monthSelector.value; // YYYY-MM
+    let totalEarly = 0, totalLate = 0, totalCover = 0;
+    Object.keys(records).forEach(dateKey => {
+      if(dateKey.startsWith(monthKey)){
+        const stats = computeRowStats(dateKey, records[dateKey]);
+        totalEarly += stats.earlyBy;
+        totalLate += stats.lateBy;
+        totalCover += stats.coverTime;
+      }
+    });
+    document.getElementById('sumEarly').textContent = formatMinutesHHMM(totalEarly,false);
+    document.getElementById('sumLate').textContent = formatMinutesHHMM(totalLate,false);
+    document.getElementById('sumCover').textContent = formatMinutesHHMM(totalCover,true);
+  }
+
+  /* ---------------- Log Rendering ---------------- */
+  function renderLog(){
+    const monthKey = monthSelector.value;
+    const listEl = document.getElementById('logList');
+    const dateKeys = Object.keys(records)
+      .filter(k => k.startsWith(monthKey))
+      .sort((a,b) => b.localeCompare(a));
+
+    if(dateKeys.length === 0){
+      listEl.innerHTML = '<div class="empty-state">No attendance entries for this month.</div>';
+      return;
+    }
+
+    listEl.innerHTML = dateKeys.map(dateKey => {
+      const rec = records[dateKey];
+      const stats = computeRowStats(dateKey, rec);
+      const inDisp = rec.inTime ? to12Hour(rec.inTime) : '--';
+      const outDisp = rec.outTime ? to12Hour(rec.outTime) : '--';
+      return `
+        <div class="log-card">
+          <div class="log-row1">
+            <div class="date-day">
+              <div class="d">${toDMY(dateKey)}</div>
+              <div class="w">${toDayShort(dateKey)}</div>
+            </div>
+            <div class="time-block">
+              <div class="lab">IN</div>
+              <div class="val ${rec.inTime?'':'empty'}">${inDisp}</div>
+            </div>
+            <div class="time-block">
+              <div class="lab">OUT</div>
+              <div class="val ${rec.outTime?'':'empty'}">${outDisp}</div>
+            </div>
+            <div class="row-actions no-print">
+              <button class="icon-btn ins" data-date="${dateKey}" title="Insert/Edit">✎</button>
+              <button class="icon-btn del" data-date="${dateKey}" title="Delete">🗑</button>
+            </div>
+          </div>
+          <div class="log-row2">
+            <span class="early">Early By: <b>${formatMinutesHHMM(stats.earlyBy,false)}</b></span>
+            <span class="late">Late By: <b>${formatMinutesHHMM(stats.lateBy,false)}</b></span>
+            <span class="cover">Cover: <b>${formatMinutesHHMM(stats.coverTime,true)}</b></span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    listEl.querySelectorAll('.icon-btn.ins').forEach(btn=>{
+      btn.addEventListener('click', ()=> openModal(btn.dataset.date));
+    });
+    listEl.querySelectorAll('.icon-btn.del').forEach(btn=>{
+      btn.addEventListener('click', ()=> deleteRecord(btn.dataset.date));
+    });
+  }
+
+  function deleteRecord(dateKey){
+    showConfirm(
+      "Delete Entry",
+      `Delete attendance entry for ${toDMY(dateKey)}? This cannot be undone.`,
+      function(){
+        delete records[dateKey];
+        saveRecords();
+        renderAll();
+        showToast("Entry deleted");
+      }
+    );
+  }
+
+  /* ---------------- Custom Confirm Dialog ---------------- */
+  const confirmOverlay = document.getElementById('confirmOverlay');
+  const confirmTitle = document.getElementById('confirmTitle');
+  const confirmMsg = document.getElementById('confirmMsg');
+  const confirmOk = document.getElementById('confirmOk');
+  const confirmCancel = document.getElementById('confirmCancel');
+  let confirmCallback = null;
+
+  function showConfirm(title, message, onConfirm){
+    confirmTitle.textContent = title;
+    confirmMsg.textContent = message;
+    confirmCallback = onConfirm;
+    confirmOverlay.classList.add('show');
+  }
+  function hideConfirm(){
+    confirmOverlay.classList.remove('show');
+    confirmCallback = null;
+  }
+  confirmCancel.addEventListener('click', hideConfirm);
+  confirmOverlay.addEventListener('click', (e)=>{ if(e.target === confirmOverlay) hideConfirm(); });
+  confirmOk.addEventListener('click', function(){
+    const cb = confirmCallback;
+    hideConfirm();
+    if(typeof cb === 'function') cb();
+  });
+
+  /* ---------------- Modal (Insert / Edit) ---------------- */
+  const overlay = document.getElementById('overlay');
+  const mDate = document.getElementById('mDate');
+  const mIn = document.getElementById('mIn');
+  const mOut = document.getElementById('mOut');
+  attachTimeMask(mIn);
+  attachTimeMask(mOut);
+
+  function openModal(prefillDate){
+    const dateKey = prefillDate || toISODate(getISTNow());
+    const rec = records[dateKey] || {};
+    mDate.value = dateKey;
+    mIn.value = rec.inTime || '10:00:00';
+    mOut.value = rec.outTime || '19:00:00';
+    document.getElementById('modalTitle').textContent = prefillDate ? 'Edit Entry' : 'Add New Entry';
+    overlay.classList.add('show');
+  }
+  function closeModal(){ overlay.classList.remove('show'); }
+
+  document.getElementById('addFab').addEventListener('click', ()=> openModal(null));
+  document.getElementById('mCancel').addEventListener('click', closeModal);
+  overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeModal(); });
+
+  document.getElementById('mSave').addEventListener('click', function(){
+    const dateKey = mDate.value;
+    if(!dateKey){ alert('Please select a date.'); return; }
+    if(!records[dateKey]) records[dateKey] = {};
+
+    if(mIn.value.trim()){
+      const t = normalizeTimeInput(mIn.value);
+      if(t === undefined){ alert('Invalid IN time. Use 24-hour format, e.g. 10:00:00 or 10:00'); return; }
+      records[dateKey].inTime = t;
+    }
+    if(mOut.value.trim()){
+      const t = normalizeTimeInput(mOut.value);
+      if(t === undefined){ alert('Invalid OUT time. Use 24-hour format, e.g. 19:02:00 or 19:02'); return; }
+      records[dateKey].outTime = t;
+    }
+
+    saveRecords();
+    closeModal();
+    // Jump summary/log to the month of the edited entry
+    monthSelector.value = dateKey.slice(0,7);
+    renderAll();
+    showToast("Entry saved");
+  });
+
+  /* ---------------- Export / Import / Clear / PDF ---------------- */
+  function exportJSON(silent){
+    const dataStr = JSON.stringify(records, null, 2);
+    const blob = new Blob([dataStr], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `attendance_export_${toISODate(getISTNow())}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    if(!silent) showToast("Exported JSON");
+  }
+  document.getElementById('exportBtn').addEventListener('click', ()=> exportJSON(false));
+
+  document.getElementById('importBtn').addEventListener('click', ()=>{
+    document.getElementById('importFile').click();
+  });
+  document.getElementById('importFile').addEventListener('change', function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt){
+      try{
+        const parsed = JSON.parse(evt.target.result);
+        Object.assign(records, parsed);
+        saveRecords();
+        renderAll();
+        showToast("Import successful");
+      }catch(err){
+        alert("Invalid JSON file.");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', function(){
+    showConfirm(
+      "Clear All Data",
+      "This will permanently delete ALL attendance records from this device. This action cannot be undone.",
+      function(){
+        records = {};
+        saveRecords();
+        renderAll();
+        showToast("All data cleared");
+      }
+    );
+  });
+
+  function generatePDF(){
+    if(typeof window.jspdf === 'undefined'){
+      showToast("PDF library failed to load. Check internet connection.");
+      return;
+    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const monthKey = monthSelector.value;
+    const monthLabel = new Date(monthKey+'-01').toLocaleDateString('en-US',{month:'long', year:'numeric'});
+
+    doc.setFontSize(14);
+    doc.text("eProcurement Technology - Attendance Report", 14, 16);
+    doc.setFontSize(10);
+    doc.text(`Employee: Vikas Songara`, 14, 23);
+    doc.text(`Month: ${monthLabel}`, 14, 29);
+    doc.text(`Generated: ${toDMY(toISODate(getISTNow()))} ${toTimeStr(getISTNow())} IST`, 14, 35);
+
+    const dateKeys = Object.keys(records)
+      .filter(k => k.startsWith(monthKey))
+      .sort((a,b) => a.localeCompare(b));
+
+    const rows = dateKeys.map(dateKey => {
+      const rec = records[dateKey];
+      const stats = computeRowStats(dateKey, rec);
+      return [
+        toDMY(dateKey),
+        toDayShort(dateKey),
+        rec.inTime ? to12Hour(rec.inTime) : '--',
+        rec.outTime ? to12Hour(rec.outTime) : '--',
+        stats.worked !== null ? formatMinutesHHMM(stats.worked,false) : '--',
+        formatMinutesHHMM(stats.earlyBy,false),
+        formatMinutesHHMM(stats.lateBy,false),
+        formatMinutesHHMM(stats.coverTime,true)
+      ];
+    });
+
+    let totalEarly=0, totalLate=0, totalCover=0;
+    dateKeys.forEach(dateKey=>{
+      const s = computeRowStats(dateKey, records[dateKey]);
+      totalEarly += s.earlyBy; totalLate += s.lateBy; totalCover += s.coverTime;
+    });
+
+    doc.autoTable({
+      startY: 40,
+      head: [["Date","Day","IN Time","OUT Time","Difference","Early By","Late By","Cover Time"]],
+      body: rows.length ? rows : [["--","--","--","--","--","--","--","--"]],
+      styles: { fontSize: 8, cellPadding: 3 },
+      headStyles: { fillColor: [30, 41, 59] },
+      foot: [["","","","Total", "", formatMinutesHHMM(totalEarly,false), formatMinutesHHMM(totalLate,false), formatMinutesHHMM(totalCover,true)]],
+      footStyles: { fillColor: [241,245,249], textColor: [15,23,42], fontStyle: 'bold' }
+    });
+
+    doc.save(`attendance_${monthKey}.pdf`);
+    showToast("PDF downloaded");
+  }
+
+  document.getElementById('pdfBtn').addEventListener('click', generatePDF);
+
+  /* ---------------- Toast ---------------- */
+  let toastTimer;
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=> t.classList.remove('show'), 2200);
+  }
+
+  /* ---------------- Render All ---------------- */
+  function renderAll(){
+    updatePunchButtons();
+    renderSummary();
+    renderLog();
+  }
+
+  /* ---------------- Init ---------------- */
+  loadRecords();
+  renderClock();
+  renderAll();
+
+})();
+</script>
+</body>
+</html>
